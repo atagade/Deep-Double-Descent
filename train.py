@@ -92,9 +92,10 @@ def generate_logs(dataset, model, width, num_gpus=1):
 
     print(f'Time taken to train: {(end_time - start_time)/60} minutes')
     
-    add_to_json(f'results/{model}-{dataset}.json',count_parameters(torch_model), final_train_loss, final_test_loss)
+    add_to_json(f'{model}-{dataset}.json',count_parameters(torch_model), final_train_loss, final_test_loss)
 
-    print('Logs dumped')
+    torch.save(torch_model.state_dict(), f'resnet18-k{str(width)}.pt')
+
 
 if __name__ == "__main__":
 

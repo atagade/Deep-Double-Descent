@@ -42,3 +42,5 @@ def add_to_json(path, nparameters, train_loss, test_loss):
     
     with open(path, 'w') as f:
         json.dump(log, f, indent = 4, separators = (',',': '))
+
+    print('Logs dumped')
