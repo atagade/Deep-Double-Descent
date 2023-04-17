@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import time
-import json
+import os
 
 from misc import count_parameters
 from misc import default_argument_parser
@@ -53,7 +53,8 @@ def train(model, train_loader, test_loader, num_epochs, criterion, optimizer, to
                         break
 
                 if epoch % 100 == 0 and i + 1 == len(train_loader):
-
+                    correct = 0
+                    total = 0
                     training_losses.append(train_loss.item())
                     
                     with torch.no_grad():
@@ -61,12 +62,15 @@ def train(model, train_loader, test_loader, num_epochs, criterion, optimizer, to
                             images = images.to(device)
                             labels = labels.to(device)
                             outputs = model(images)
+                            _, predicted = outputs.max(1)
+                            total += labels.size(0)
+                            correct += predicted.eq(labels).sum().item()
                             test_loss = criterion(outputs, labels)
                     
                     test_losses.append(test_loss.item())
 
-                    print ('Model: {} Epoch [{}/{}], Step [{}/{}], Training Loss: {:.4f}, Test Loss: {:.4f}' 
-                        .format(count_parameters(model), epoch+1, num_epochs, i+1, total_steps, train_loss.item(), test_loss.item()))
+                    print ('Model: {} Epoch [{}/{}], Step [{}/{}], Training Loss: {:.4f}, Test Loss: {:.4f}, Test Accuracy: {:.3f}%' 
+                        .format(count_parameters(model), epoch+1, num_epochs, i+1, total_steps, train_loss.item(), test_loss.item(), 100.*correct/total))
                     
     return train_loss.item(), test_loss.item()
 
@@ -92,9 +96,13 @@ def generate_logs(dataset, model, width, num_gpus=1):
 
     print(f'Time taken to train: {(end_time - start_time)/60} minutes')
     
-    add_to_json(f'{model}-{dataset}.json',count_parameters(torch_model), final_train_loss, final_test_loss)
+    add_to_json(f'outputs/logs/{model}-{dataset}.json',count_parameters(torch_model), final_train_loss, final_test_loss)
 
-    torch.save(torch_model.state_dict(), f'resnet18-k{str(width)}.pt')
+    if not os.path.exists('/outputs/models'):
+        os.mkdir('/outputs/models')
+        torch.save(torch_model.state_dict(), f'outputs/models/resnet18-k{str(width)}.pt')
+    else:
+        torch.save(torch_model.state_dict(), f'outputs/models/resnet18-k{str(width)}.pt')
 
 
 if __name__ == "__main__":
